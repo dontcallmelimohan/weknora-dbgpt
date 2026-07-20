@@ -158,6 +158,18 @@ const router = createRouter({
           meta: { requiresInit: true, requiresAuth: true }
         },
         {
+          path: "data-chat",
+          name: "dataChat",
+          component: () => import("../views/data/DataChat.vue"),
+          meta: { requiresInit: true, requiresAuth: true }
+        },
+        {
+          path: "data-sources",
+          name: "dataSources",
+          component: () => import("../views/data/DataSource.vue"),
+          meta: { requiresInit: true, requiresAuth: true }
+        },
+        {
           path: "organizations",
           name: "organizationList",
           component: () => import("../views/organization/OrganizationList.vue"),
