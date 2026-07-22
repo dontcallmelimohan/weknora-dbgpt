@@ -794,10 +794,6 @@ services:
     profiles:
       - full
 
-networks:
-  WeKnora-network:
-    driver: bridge
-
   # ========================================================================
   # DB-GPT 核心引擎：Agent / SQL生成 / 数据源连接管理
   # ========================================================================
@@ -865,6 +861,10 @@ networks:
     profiles:
       - dbgpt
       - full
+
+networks:
+  WeKnora-network:
+    driver: bridge
 
 volumes:
   postgres-data:
