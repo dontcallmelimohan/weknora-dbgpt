@@ -1,14 +1,8 @@
-# Multi-stage: build in Docker, no host Node/pnpm needed
-FROM node:22-alpine AS builder
-WORKDIR /build
-RUN corepack enable && corepack prepare pnpm@latest --activate
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
-COPY . .
-RUN pnpm build
-
+# Production image. Build static assets on the host first:
+#   pnpm build
 FROM nginx:stable-alpine
-COPY --from=builder /build/dist /usr/share/nginx/html
+
+COPY dist /usr/share/nginx/html
 
 COPY nginx.conf /etc/nginx/templates/default.conf.template
 
