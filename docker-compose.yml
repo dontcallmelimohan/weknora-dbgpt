@@ -15,6 +15,11 @@ services:
       # For remote deployment, set this to the remote App's service port.
       - APP_PORT=${APP_BACKEND_PORT:-8080}
       - APP_SCHEME=${APP_SCHEME:-http}
+      # DB-GPT 相关代理目标
+      - DBGPT_HOST=${DBGPT_HOST:-dbgpt}
+      - DBGPT_PORT=${DBGPT_PORT:-5670}
+      - DBGPT_DATA_SERVICE_HOST=${DBGPT_DATA_SERVICE_HOST:-dbgpt-data-service}
+      - DBGPT_DATA_SERVICE_PORT=${DBGPT_DATA_SERVICE_PORT:-8100}
     # NOTE: If using a remote App backend, comment out or remove the depends_on
     # block below and set APP_HOST/APP_BACKEND_PORT/APP_SCHEME in your .env file.
     depends_on:
@@ -793,6 +798,74 @@ networks:
   WeKnora-network:
     driver: bridge
 
+  # ========================================================================
+  # DB-GPT 核心引擎：Agent / SQL生成 / 数据源连接管理
+  # ========================================================================
+  dbgpt:
+    image: eosphorosai/dbgpt-openai:latest
+    container_name: WeKnora-dbgpt
+    command: dbgpt start webserver --config /app/configs/dbgpt-proxy-siliconflow-mysql.toml
+    environment:
+      - SILICONFLOW_API_KEY=${SILICONFLOW_API_KEY:-}
+      - MYSQL_PASSWORD=${DBGPT_MYSQL_PASSWORD:-aa123456}
+      - MYSQL_HOST=${DBGPT_MYSQL_HOST:-dbgpt-mysql}
+      - MYSQL_PORT=${DBGPT_MYSQL_PORT:-3306}
+      - MYSQL_DATABASE=${DBGPT_MYSQL_DATABASE:-dbgpt}
+      - MYSQL_USER=${DBGPT_MYSQL_USER:-root}
+    volumes:
+      - ./docker/dbgpt/configs:/app/configs
+      - dbgpt-data:/app/pilot/data
+      - dbgpt-message:/app/pilot/message
+    depends_on:
+      dbgpt-mysql:
+        condition: service_healthy
+    networks:
+      - WeKnora-network
+    restart: unless-stopped
+    profiles:
+      - dbgpt
+      - full
+
+  dbgpt-mysql:
+    image: mysql:8.0
+    container_name: WeKnora-dbgpt-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DBGPT_MYSQL_PASSWORD:-aa123456}
+      - MYSQL_DATABASE=${DBGPT_MYSQL_DATABASE:-dbgpt}
+    volumes:
+      - dbgpt-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DBGPT_MYSQL_PASSWORD:-aa123456}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - WeKnora-network
+    restart: unless-stopped
+    profiles:
+      - dbgpt
+      - full
+
+  # -----------------------------------------------------------------------
+  # DB-GPT 数据微服务代理：前端 API 格式转换 + 透传到 DB-GPT
+  # -----------------------------------------------------------------------
+  dbgpt-data-service:
+    build:
+      context: ./docker/dbgpt-service
+    container_name: WeKnora-dbgpt-data-service
+    environment:
+      - DBGPT_BASE=http://dbgpt:5670
+    depends_on:
+      dbgpt:
+        condition: service_started
+    networks:
+      - WeKnora-network
+    restart: unless-stopped
+    profiles:
+      - dbgpt
+      - full
+
 volumes:
   postgres-data:
   data-files:
@@ -810,3 +883,6 @@ volumes:
   langfuse_clickhouse_logs:
   langfuse_minio_data:
   searxng_config:
+  dbgpt-mysql-data:
+  dbgpt-data:
+  dbgpt-message:

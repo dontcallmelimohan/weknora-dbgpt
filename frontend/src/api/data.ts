@@ -7,17 +7,14 @@
 import axios from 'axios'
 import { generateRandomString } from '@/utils'
 
-const DBGPT_BASE = 'http://localhost:5670'
-const DATA_SERVICE_BASE = 'http://localhost:8100'
-
 const dbgptApi = axios.create({
-  baseURL: DBGPT_BASE,
+  baseURL: '',
   timeout: 30000,
   headers: { 'Content-Type': 'application/json' },
 })
 
 const dataApi = axios.create({
-  baseURL: DATA_SERVICE_BASE,
+  baseURL: '',
   timeout: 120000,
   headers: {
     'Content-Type': 'application/json',
@@ -111,7 +108,7 @@ export function buildChatStreamUrl(
   } else {
     params.set('db_url', dbUrl || 'sqlite:///:memory:')
   }
-  return `${DATA_SERVICE_BASE}/api/chat/stream?${params.toString()}`
+  return `/api/chat/stream?${params.toString()}`
 }
 
 // ============ 微服务数据库 CRUD（保留兼容） ============
