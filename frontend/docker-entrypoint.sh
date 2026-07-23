@@ -12,7 +12,11 @@ export MAX_FILE_SIZE=${MAX_FILE_SIZE_MB}M
 export APP_HOST=${APP_HOST:-app}
 export APP_PORT=${APP_PORT:-8080}
 export APP_SCHEME=${APP_SCHEME:-http}
-envsubst '${MAX_FILE_SIZE} ${APP_HOST} ${APP_PORT} ${APP_SCHEME}' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf
+export DBGPT_HOST=${DBGPT_HOST:-dbgpt}
+export DBGPT_PORT=${DBGPT_PORT:-5670}
+export DBGPT_DATA_SERVICE_HOST=${DBGPT_DATA_SERVICE_HOST:-dbgpt-data-service}
+export DBGPT_DATA_SERVICE_PORT=${DBGPT_DATA_SERVICE_PORT:-8100}
+envsubst '${MAX_FILE_SIZE} ${APP_HOST} ${APP_PORT} ${APP_SCHEME} ${DBGPT_HOST} ${DBGPT_PORT} ${DBGPT_DATA_SERVICE_HOST} ${DBGPT_DATA_SERVICE_PORT}' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf
 
 # 启动 nginx
 exec nginx -g 'daemon off;'
