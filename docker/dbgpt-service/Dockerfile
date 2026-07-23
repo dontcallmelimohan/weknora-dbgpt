@@ -2,6 +2,9 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+# 使用清华 pip 镜像加速
+RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+
 # Install only the minimal deps needed for the proxy routes
 RUN pip install --no-cache-dir \
     fastapi uvicorn[standard] httpx
