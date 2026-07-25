@@ -180,17 +180,64 @@ export interface DatabaseConnection {
   description: string
 }
 
+function normalizeConnectorTypeItem(item: any): ConnectorType | null {
+  if (!item || typeof item !== 'object') return null
+  const name = item.name || item.type || item.value || item.connector_type || item.key || ''
+  if (!name) return null
+
+  return {
+    name: String(name),
+    label: String(item.label || item.title || item.display_name || item.name || item.type || name),
+    icon: String(item.icon || ''),
+    desc: String(item.desc || item.description || item.summary || ''),
+    parameters: Array.isArray(item.parameters) ? item.parameters : Array.isArray(item.params) ? item.params : [],
+  }
+}
+
+function normalizeConnectorTypePayload(payload: any): ConnectorType[] {
+  if (Array.isArray(payload)) {
+    return payload
+      .map(item => normalizeConnectorTypeItem(item))
+      .filter((item): item is ConnectorType => Boolean(item))
+  }
+
+  if (!payload || typeof payload !== 'object') return []
+
+  const candidates = [payload.types, payload.connectors, payload.connector_types, payload.items, payload.results, payload.data]
+  for (const candidate of candidates) {
+    const normalized = normalizeConnectorTypePayload(candidate)
+    if (normalized.length > 0) return normalized
+  }
+
+  if (payload.name || payload.type || payload.label || payload.description) {
+    const normalized = normalizeConnectorTypeItem(payload)
+    return normalized ? [normalized] : []
+  }
+
+  return []
+}
+
+function normalizeDatabaseConnections(payload: any): DatabaseConnection[] {
+  if (Array.isArray(payload)) return payload
+  if (!payload || typeof payload !== 'object') return []
+
+  const candidates = [payload.connections, payload.items, payload.results, payload.data]
+  for (const candidate of candidates) {
+    const normalized = normalizeDatabaseConnections(candidate)
+    if (normalized.length > 0) return normalized
+  }
+
+  return []
+}
+
 export async function fetchConnectorTypes(): Promise<ConnectorType[]> {
   const { data } = await dataApi.get('/api/connectors/types')
-  if (data.data?.types) return data.data.types
-  if (data.types) return data.types
-  return []
+  return normalizeConnectorTypePayload(data)
 }
 
 export async function fetchDatabaseConnections(): Promise<DatabaseConnection[]> {
   const { data } = await dataApi.get('/api/connectors')
-  if (data.data) return data.data
-  return []
+  return normalizeDatabaseConnections(data)
 }
 
 export async function createDatabaseConnection(params: Record<string, any>): Promise<any> {

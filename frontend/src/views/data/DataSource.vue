@@ -260,6 +260,16 @@ const formConnectorTypes = computed(() => {
 })
 
 // ── Helpers ──
+function buildFallbackConnectorTypes(): ConnectorType[] {
+  return Object.entries(dbMapper).map(([name, meta]) => ({
+    name,
+    label: meta.label,
+    icon: meta.icon,
+    desc: meta.desc,
+    parameters: [],
+  }))
+}
+
 function getIcon(name: string): string {
   return dbMapper[name]?.icon || `/icons/db/${name}.png`
 }
@@ -314,12 +324,15 @@ async function loadData() {
       fetchConnectorTypes(),
       fetchDatabaseConnections(),
     ])
-    // DB-GPT returns: { success: true, data: { types: [...] } }
-    // Our API unwraps to types array
-    connectorTypes.value = Array.isArray(types) ? types : []
+
+    connectorTypes.value = Array.isArray(types) && types.length > 0
+      ? types
+      : buildFallbackConnectorTypes()
     connections.value = Array.isArray(conns) ? conns : (conns as any)?.data ?? []
   } catch (e) {
     console.error('Failed to load data sources', e)
+    connectorTypes.value = buildFallbackConnectorTypes()
+    connections.value = []
   } finally {
     loading.value = false
   }
