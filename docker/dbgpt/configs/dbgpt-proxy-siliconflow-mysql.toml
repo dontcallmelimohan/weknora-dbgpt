@@ -28,7 +28,7 @@ persist_path = "pilot/data"
 # Model Configurations
 [models]
 [[models.llms]]
-name = "Qwen/Qwen2.5-Coder-32B-Instruct"
+name = "Qwen/Qwen2.5-7B-Instruct"
 provider = "proxy/siliconflow"
 api_key = "${env:SILICONFLOW_API_KEY}"
 
@@ -41,3 +41,9 @@ api_key = "${env:SILICONFLOW_API_KEY}"
 name = "BAAI/bge-reranker-v2-m3"
 provider = "proxy/siliconflow"
 api_key = "${env:SILICONFLOW_API_KEY}"
+
+[[models.llms]]
+name = "glm-4-flash"
+provider = "proxy/openai"
+api_key = "ef489610b7f4407fa41f6e752b399050.Cowp58vweUsAysHt"
+api_base = "https://open.bigmodel.cn/api/paas/v4/"
